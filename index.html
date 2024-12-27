@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Metrics Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f7fc;
+        }
+        h1 {
+            color: #333;
+        }
+        .metrics {
+            text-align: left;
+            margin-top: 20px;
+        }
+        .metric {
+            margin-bottom: 10px;
+        }
+        .chart-container {
+            width: 80%;
+            margin: 0 auto;
+            margin-top: 30px;
+            height: 400px; /* Fixed height for the container */
+            background-color: #fff; /* Added background to the graph */
+            border-radius: 8px; /* Rounded corners for the container */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        canvas {
+            height: 80% !important; /* Ensure canvas fills the container */
+            width: 100% !important;  /* Ensure canvas fills the container */
+        }
+        .metrics-container {
+            width: 80%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 30px; /* Space between disk data and network table */
+            margin-top: 30px;
+        }
+        .disk-list, .network-table {
+            width: 45%; /* Adjust width to ensure they fit side by side */
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .disk-list h2, .network-table h2 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center; /* Center the header */
+        }
+        .disk-item {
+            margin-bottom: 20px;
+        }
+        .disk-name, .network-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #8c38ff;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .disk-space-info, .network-data-info {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 1em;
+        }
+        .network-table table {
+            width: 100%;
+            border-collapse: separate; /* Ensure no gaps between cells */
+            margin-top: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .network-table th, .network-table td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 1em;
+            border: none;
+        }
+        .network-table th {
+            background-color: #8c38ff; /* Pastel purple */
+            color: white;
+            font-weight: bold;
+        }
+        .network-table td {
+            background-color: #f9f9f9;
+        }
+        .network-table tr:nth-child(even) td {
+            background-color: #f1f1f1;
+        }
+        .network-table tr:hover td {
+            background-color: #e2e2e2;
+        }
+    </style>
+</head>
+<body>
+<h1>System Metrics Monitor</h1>
+
+<!-- Memory Usage Chart -->
+<div class="chart-container">
+    <h2>Memory Usage</h2>
+    <canvas id="memoryChart"></canvas>
+</div>
+
+<!-- CPU Usage Chart -->
+<div class="chart-container">
+    <h2>CPU Usage</h2>
+    <canvas id="cpuChart"></canvas>
+</div>
+
+<!-- Network Speed Charts -->
+<div class="chart-container">
+    <h2>Network Up Speed (KiB/s)</h2>
+    <canvas id="upSpeedChart"></canvas>
+</div>
+
+<!-- Disk Usage and Network Data Side-by-Side -->
+<div class="metrics-container">
+    <!-- Disk Usage -->
+    <div class="disk-list">
+        <h2>Disks</h2>
+        <div id="diskList"></div>
+    </div>
+
+    <!-- Network Data -->
+    <div class="network-table">
+        <h2>Network Data</h2>
+        <table id="networkTable">
+            <thead>
+            <tr>
+                <th></th>
+                <th>Down</th>
+                <th>Up</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Set up Chart.js for Memory Usage
+    const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+    const memoryChart = new Chart(memoryCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Memory Usage (%)',
+                data: [],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: true,
+                        text: 'Time (s)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Memory Usage (%)'
+                    },
+                    min: 0,
+                    max: 100
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Set up Chart.js for CPU Usage
+    const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+    const cpuChart = new Chart(cpuCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'CPU Usage (%)',
+                data: [],
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: true,
+                        text: 'Time (s)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'CPU Usage (%)'
+                    },
+                    min: 0,
+                    max: 100
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Set up Chart.js for Network Up Speed
+    const upSpeedCtx = document.getElementById('upSpeedChart').getContext('2d');
+    const upSpeedChart = new Chart(upSpeedCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Up Speed (KiB/s)',
+                data: [],
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                fill: true,
+                tension: 0.1
+            },
+            {
+                label: 'Down Speed (KiB/s)',
+                data: [],
+                borderColor: 'rgba(255, 159, 64, 1)',
+                backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: true,
+                        text: 'Time (s)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Speed (KiB/s)'
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    let timeElapsed = 0; // To keep track of time for the x-axis
+    let memoryData = [];
+    let cpuData = [];
+    let upSpeedData = [];
+    let downSpeedData = [];
+    let prevNetworkData = {}; // To store previous network data for speed calculation
+
+    async function fetchMetrics() {
+        try {
+            const response = await fetch('/system_metrics');
+            const data = await response.json();
+
+            // Update memory usage graph
+            memoryData.push((data.used_memory / data.total_memory) * 100); // Convert to MB
+            if (memoryData.length > 50) { memoryData.shift(); } // Limit to 50 points
+            memoryChart.data.labels.push(timeElapsed);
+            memoryChart.data.datasets[0].data = memoryData;
+
+            // Update CPU usage graph
+            cpuData.push(data.cpu_usage);
+            if (cpuData.length > 50) { cpuData.shift(); } // Limit to 50 points
+            cpuChart.data.labels.push(timeElapsed);
+            cpuChart.data.datasets[0].data = cpuData;
+
+            // Update network speed graphs
+            const networkTableBody = document.getElementById('networkTable').querySelector('tbody');
+            networkTableBody.innerHTML = ''; // Clear previous content
+
+            data.networks.filter(network => network.name.startsWith('w')).forEach(network => {
+                const speed_row = document.createElement('tr');
+                const data_row = document.createElement('tr');
+                const speed_cel = document.createElement('td');
+                speed_cel.textContent = 'Speed (KIB/s)'
+                const data_cel = document.createElement('td');
+                data_cel.textContent = 'Total (GB)'
+
+                const networkNameCell = document.createElement('td');
+                networkNameCell.textContent = network.name;
+
+                const totalDownGB = (network.down / 1024 / 1024 / 1024).toFixed(2); // Convert to GB
+                const totalUpGB = (network.up / 1024 / 1024 / 1024).toFixed(2); // Convert to GB
+
+                const downCell = document.createElement('td');
+                downCell.textContent = totalDownGB + ' GB';
+
+                const upCell = document.createElement('td');
+                upCell.textContent = totalUpGB + ' GB';
+
+
+                const prevNetwork = prevNetworkData[network.name] || { down: 0, up: 0 };
+                const downSpeed = ((network.down - prevNetwork.down) / 1024) / 2.5; // Speed in KiB/s
+                const upSpeed = ((network.up - prevNetwork.up) / 1024) / 2.5; // Speed in KiB/s
+
+                const downSpeedCell = document.createElement('td');
+                downSpeedCell.textContent = downSpeed.toFixed(2) + ' KiB/s';
+
+                const upSpeedCell = document.createElement('td');
+                upSpeedCell.textContent = upSpeed.toFixed(2) + ' KiB/s';
+
+                data_row.appendChild(data_cel);
+                data_row.appendChild(downCell);
+                data_row.appendChild(upCell);
+                speed_row.appendChild(speed_cel);
+                speed_row.appendChild(downSpeedCell);
+                speed_row.appendChild(upSpeedCell);
+
+                networkTableBody.appendChild(speed_row);
+                networkTableBody.appendChild(data_row);
+
+                upSpeedData.push(upSpeed);
+                downSpeedData.push(downSpeed);
+
+                // Limit data points for the graphs
+                if (upSpeedData.length > 50) { upSpeedData.shift(); }
+                if (downSpeedData.length > 50) { downSpeedData.shift(); }
+
+                upSpeedChart.data.labels.push(timeElapsed);
+                upSpeedChart.data.datasets[0].data = upSpeedData;
+                upSpeedChart.data.datasets[1].data = downSpeedData;
+
+                // Save current network data for next iteration
+                prevNetworkData[network.name] = { down: network.down, up: network.up };
+            });
+
+            // Update the disk usage progress bars
+            const diskListContainer = document.getElementById('diskList');
+            diskListContainer.innerHTML = ''; // Clear previous content
+
+            data.disks.forEach(disk => {
+                const diskItem = document.createElement('div');
+                diskItem.classList.add('disk-item');
+
+                const diskName = document.createElement('div');
+                diskName.classList.add('disk-name');
+                diskName.textContent = disk.name;
+
+                const progressBarContainer = document.createElement('div');
+                progressBarContainer.classList.add('progress-bar-container');
+                const progressBar = document.createElement('div');
+                progressBar.classList.add('progress-bar');
+                progressBar.style.width = `${((disk.total_space - disk.available_space) / disk.total_space) * 100}%`;
+                progressBarContainer.appendChild(progressBar);
+
+                const diskSpaceInfo = document.createElement('div');
+                diskSpaceInfo.classList.add('disk-space-info');
+                diskSpaceInfo.textContent = `${((disk.total_space - disk.available_space) / 1024 / 1024 / 1024).toFixed(2)} GB / ${(disk.total_space / 1024 / 1024 / 1024).toFixed(2)} GB`;
+
+                diskItem.appendChild(diskName);
+                diskItem.appendChild(progressBarContainer);
+                diskItem.appendChild(diskSpaceInfo);
+
+                diskListContainer.appendChild(diskItem);
+            });
+
+            // Refresh the charts
+            memoryChart.update();
+            cpuChart.update();
+            upSpeedChart.update();
+
+            timeElapsed += 2.5; // Increase time (in seconds)
+        } catch (error) {
+            console.error("Error fetching system metrics", error);
+        }
+    }
+
+    // Fetch data every 2.5 seconds
+    setInterval(fetchMetrics, 2500);
+    fetchMetrics(); // Initial fetch
+</script>
+</body>
+</html>
