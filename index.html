@@ -14,19 +14,12 @@
         h1 {
             color: #333;
         }
-        .metrics {
-            text-align: left;
-            margin-top: 20px;
-        }
-        .metric {
-            margin-bottom: 10px;
-        }
         .chart-container {
             width: 80%;
             margin: 0 auto;
             margin-top: 15px;
             margin-bottom: 15px;
-            height: 400px; /* Fixed height for the container */
+            height: 350px; /* Fixed height for the container */
             background-color: #fff; /* Added background to the graph */
             border-radius: 8px; /* Rounded corners for the container */
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -44,7 +37,7 @@
             gap: 30px; /* Space between disk data and network table */
             margin-top: 15px;
         }
-        .disk-list, .network-table {
+        .disk-list {
             width: 45%; /* Adjust width to ensure they fit side by side */
             background-color: #fff;
             border-radius: 8px;
@@ -82,39 +75,99 @@
             margin-top: 5px;
             font-size: 1em;
         }
-        .network-table table {
-            width: 100%;
-            border-collapse: separate; /* Ensure no gaps between cells */
-            margin-top: 10px;
-            border-radius: 8px;
-            overflow: hidden;
+        /* Refresh Rate Input and Button Container */
+        .refresh-rate-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
         }
 
-        .network-table th, .network-table td {
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            text-align: center;
-            font-size: 1em;
-            border: none;
-        }
-        .network-table th {
-            background-color: #8c38ff; /* Pastel purple */
-            color: white;
+        .refresh-rate-label {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 8px;
             font-weight: bold;
         }
-        .network-table td {
-            background-color: #f9f9f9;
+
+        .refresh-rate-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Space between the input and button */
         }
-        .network-table tr:nth-child(even) td {
-            background-color: #f1f1f1;
+
+        .refresh-rate-input {
+            width: 220px;
+            padding: 10px 12px;
+            font-size: 1em;
+            color: #333;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
-        .network-table tr:hover td {
-            background-color: #e2e2e2;
+
+        .refresh-rate-input:focus {
+            outline: none;
+            border-color: #8c38ff;
+            box-shadow: 0 0 4px rgba(140, 56, 255, 0.6);
         }
+
+        .refresh-rate-input::placeholder {
+            color: #aaa;
+            font-style: italic;
+        }
+
+        .refresh-rate-button {
+            padding: 10px 20px;
+            background-color: #8c38ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .refresh-rate-button:hover {
+            background-color: #7326d1;
+            box-shadow: 0 4px 12px rgba(140, 56, 255, 0.3);
+        }
+
+        .refresh-rate-button:active {
+            background-color: #5b1ca9;
+            box-shadow: 0 2px 8px rgba(140, 56, 255, 0.5);
+        }
+
+        .chart-container .network-dropdown {
+            position: absolute;
+            top: 35px;
+            right: 20px;
+            z-index: 1; /* Ensures it stays above other elements */
+        }
+
     </style>
 </head>
 <body>
 <h1>Webtop</h1>
+
+<!-- Refresh Time Setting -->
+<div class="refresh-rate-container">
+    <label for="refreshRate" class="refresh-rate-label">Set Refresh Rate (ms)</label>
+    <div class="refresh-rate-controls">
+        <input
+                id="refreshRate"
+                type="number"
+                class="refresh-rate-input"
+                placeholder="Enter in milliseconds"
+                min="500"
+                step="100"
+        />
+        <button id="applyRate" class="refresh-rate-button">Apply</button>
+    </div>
+</div>
 
 <div class="metrics-container">
     <!-- Memory Usage Chart -->
@@ -132,8 +185,11 @@
 
 <div class="metrics-container">
     <!-- Network Speed Charts -->
-    <div class="chart-container">
-        <h2>Network Up Speed (KiB/s)</h2>
+    <div class="chart-container" style="position: relative;">
+        <h2>Network Speed</h2>
+        <select id="networkInterface" class="refresh-rate-input network-dropdown">
+            <!-- Options will be dynamically populated -->
+        </select>
         <canvas id="upSpeedChart"></canvas>
     </div>
     <!-- Disk Usage -->
@@ -209,8 +265,11 @@
                     type: 'linear',
                     position: 'bottom',
                     title: {
-                        display: true,
+                        display: false,
                         text: 'Time (s)'
+                    },
+                    ticks: {
+                        display: false
                     }
                 },
                 y: {
@@ -254,8 +313,11 @@
                     type: 'linear',
                     position: 'bottom',
                     title: {
-                        display: true,
+                        display: false,
                         text: 'Time (s)'
+                    },
+                    ticks: {
+                        display: false
                     }
                 },
                 y: {
@@ -307,8 +369,11 @@
                     type: 'linear',
                     position: 'bottom',
                     title: {
-                        display: true,
+                        display: false,
                         text: 'Time (s)'
+                    },
+                    ticks: {
+                        display: false
                     }
                 },
                 y: {
@@ -335,6 +400,10 @@
     let upSpeedData = [];
     let downSpeedData = [];
     let prevNetworkData = {}; // To store previous network data for speed calculation
+    let networkInterfaces = []; // List of available network interfaces
+    let currentInterfaceIndex = 0; // Index of the currently selected interface
+    let refreshInterval = 2500;
+    let intervalId = setInterval(fetchMetrics, refreshInterval);
 
     async function fetchMetrics() {
         try {
@@ -353,8 +422,23 @@
             cpuChart.data.labels.push(timeElapsed);
             cpuChart.data.datasets[0].data = cpuData;
 
+            // Update network interface list if not already done
+            // Populate the dropdown with network interface options (if not already populated)
+            const networkSelect = document.getElementById('networkInterface');
+            if (networkSelect.options.length === 0) {
+                data.networks.forEach(network => {
+                    const option = document.createElement('option');
+                    option.value = network.name;
+                    option.textContent = network.name;
+                    networkSelect.appendChild(option);
+                });
+            }
+            // Get the selected network interface
+            const selectedInterface = networkSelect.value;
+            const network = data.networks.find(net => net.name === selectedInterface);
+
             // Update network speed graphs
-            data.networks.filter(network => network.name.startsWith('w')).forEach(network => {
+            if (network) {
                 const prevNetwork = prevNetworkData[network.name] || { down: 0, up: 0 };
                 const downSpeed = ((network.down - prevNetwork.down) / 1024) / 2.5; // Speed in KiB/s
                 const upSpeed = ((network.up - prevNetwork.up) / 1024) / 2.5; // Speed in KiB/s
@@ -372,7 +456,7 @@
 
                 // Save current network data for next iteration
                 prevNetworkData[network.name] = { down: network.down, up: network.up };
-            });
+            }
 
             // Update the disk usage progress bars
             const diskListContainer = document.getElementById('diskList');
@@ -409,14 +493,45 @@
             cpuChart.update();
             upSpeedChart.update();
 
-            timeElapsed += 2.5; // Increase time (in seconds)
+            timeElapsed += (refreshInterval / 1000); // Increase time (in seconds)
         } catch (error) {
             console.error("Error fetching system metrics", error);
         }
     }
 
-    // Fetch data every 2.5 seconds
-    setInterval(fetchMetrics, 2500);
+    function startFetchingMetrics() {
+        clearInterval(intervalID); // Clear the previous interval
+        intervalID = setInterval(fetchMetrics, refreshInterval); // Set the new interval
+    }
+
+
+
+    // Event listener for applying a new refresh rate
+    document.getElementById('applyRate').addEventListener('click', () => {
+        const input = document.getElementById('refreshRate');
+        const newRate = parseInt(input.value, 10);
+
+        if (newRate >= 500) { // Set a minimum refresh rate of 500ms
+            refreshInterval = newRate;
+            clearInterval(intervalId); // Clear the previous interval
+            intervalId = setInterval(fetchMetrics, refreshInterval); // Apply the new interval
+        } else {
+            alert('Please enter a value of at least 500 ms');
+        }
+    });
+
+    function cycleInterface() {
+        if (networkInterfaces.length > 0) {
+            currentInterfaceIndex = (currentInterfaceIndex + 1) % networkInterfaces.length;
+            document.getElementById('selectedInterface').textContent = `Interface: ${networkInterfaces[currentInterfaceIndex]}`;
+            upSpeedData = [];
+            downSpeedData = [];
+        }
+    }
+
+    document.getElementById('cycleInterface').addEventListener('click', cycleInterface);
+
+    startFetchingMetrics();
     fetchMetrics(); // Initial fetch
 </script>
 </body>
