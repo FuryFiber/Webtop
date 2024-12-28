@@ -208,7 +208,7 @@
 
 <!-- Refresh Time Setting -->
 <div class="refresh-rate-container">
-    <label for="refreshRate" class="refresh-rate-label">Set Refresh Rate (ms)</label>
+    <label for="refreshRate" class="refresh-rate-label">Refresh Rate (ms)</label>
     <div class="refresh-rate-controls">
         <input
                 id="refreshRate"
@@ -284,7 +284,7 @@
 
             // Position the value near the top right
             const { top, right } = chart.chartArea;
-            ctx.fillText(`Current Usage: ${Math.round(currentValue * 100) / 100} %`, right-200, top - 10);
+            ctx.fillText(`Usage: ${Math.round(currentValue * 100) / 100} %`, right-150, top - 10);
 
             ctx.restore();
         }
