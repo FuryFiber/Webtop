@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Metrics Monitor</title>
+    <title>Webtop</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -24,7 +24,8 @@
         .chart-container {
             width: 80%;
             margin: 0 auto;
-            margin-top: 30px;
+            margin-top: 15px;
+            margin-bottom: 15px;
             height: 400px; /* Fixed height for the container */
             background-color: #fff; /* Added background to the graph */
             border-radius: 8px; /* Rounded corners for the container */
@@ -41,7 +42,7 @@
             display: flex;
             justify-content: center;
             gap: 30px; /* Space between disk data and network table */
-            margin-top: 30px;
+            margin-top: 15px;
         }
         .disk-list, .network-table {
             width: 45%; /* Adjust width to ensure they fit side by side */
@@ -113,51 +114,80 @@
     </style>
 </head>
 <body>
-<h1>System Metrics Monitor</h1>
+<h1>Webtop</h1>
 
-<!-- Memory Usage Chart -->
-<div class="chart-container">
-    <h2>Memory Usage</h2>
-    <canvas id="memoryChart"></canvas>
-</div>
-
-<!-- CPU Usage Chart -->
-<div class="chart-container">
-    <h2>CPU Usage</h2>
-    <canvas id="cpuChart"></canvas>
-</div>
-
-<!-- Network Speed Charts -->
-<div class="chart-container">
-    <h2>Network Up Speed (KiB/s)</h2>
-    <canvas id="upSpeedChart"></canvas>
-</div>
-
-<!-- Disk Usage and Network Data Side-by-Side -->
 <div class="metrics-container">
-    <!-- Disk Usage -->
-    <div class="disk-list">
-        <h2>Disks</h2>
-        <div id="diskList"></div>
+    <!-- Memory Usage Chart -->
+    <div class="chart-container">
+        <h2>Memory Usage</h2>
+        <canvas id="memoryChart"></canvas>
     </div>
 
-    <!-- Network Data -->
-    <div class="network-table">
-        <h2>Network Data</h2>
-        <table id="networkTable">
-            <thead>
-            <tr>
-                <th></th>
-                <th>Down</th>
-                <th>Up</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <!-- CPU Usage Chart -->
+    <div class="chart-container">
+        <h2>CPU Usage</h2>
+        <canvas id="cpuChart"></canvas>
+    </div>
+</div>
+
+<div class="metrics-container">
+    <!-- Network Speed Charts -->
+    <div class="chart-container">
+        <h2>Network Up Speed (KiB/s)</h2>
+        <canvas id="upSpeedChart"></canvas>
+    </div>
+    <!-- Disk Usage -->
+    <div class="chart-container">
+        <h2>Disks</h2>
+        <div id="diskList"></div>
     </div>
 </div>
 
 <script>
+    const currentUsagePlugin = {
+        id: 'currentUsagePlugin',
+        beforeDraw: (chart) => {
+            const ctx = chart.ctx;
+            const dataset = chart.data.datasets[0].data;
+            const currentValue = dataset[dataset.length - 1]; // Get the last value
+
+            ctx.save();
+            ctx.font = '16px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+
+            // Position the value near the top right
+            const { top, right } = chart.chartArea;
+            ctx.fillText(`Current Usage: ${Math.round(currentValue * 100) / 100} %`, right-200, top - 10);
+
+            ctx.restore();
+        }
+    };
+
+    const currentSpeedPlugin = {
+        id: 'currentSpeedPlugin',
+        beforeDraw: (chart) => {
+            const ctx = chart.ctx;
+            const up_data = chart.data.datasets[0].data;
+            const down_data = chart.data.datasets[1].data;
+            const up_speed = up_data[up_data.length - 1]; // Get the last value
+            const down_speed = down_data[down_data.length - 1]; // Get the last value
+
+            ctx.save();
+            ctx.font = '16px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+
+            // Position the value near the top right
+            const { top, right } = chart.chartArea;
+            ctx.fillText(`Up: ${Math.round(up_speed * 100) / 100} KiB/s`, right-150, top + 20);
+            ctx.fillText(`Down: ${Math.round(down_speed * 100) / 100} KiB/s`, right-150, top - 10);
+
+            ctx.restore();
+        }
+    };
     // Set up Chart.js for Memory Usage
     const memoryCtx = document.getElementById('memoryChart').getContext('2d');
     const memoryChart = new Chart(memoryCtx, {
@@ -193,8 +223,14 @@
                 }
             },
             responsive: true,
-            maintainAspectRatio: false
-        }
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            }
+        },
+        plugins: [currentUsagePlugin]
     });
 
     // Set up Chart.js for CPU Usage
@@ -232,8 +268,14 @@
                 }
             },
             responsive: true,
-            maintainAspectRatio: false
-        }
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            }
+        },
+        plugins: [currentUsagePlugin]
     });
 
     // Set up Chart.js for Network Up Speed
@@ -277,8 +319,14 @@
                 }
             },
             responsive: true,
-            maintainAspectRatio: false
-        }
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            }
+        },
+        plugins: [currentSpeedPlugin]
     });
 
     let timeElapsed = 0; // To keep track of time for the x-axis
@@ -306,49 +354,10 @@
             cpuChart.data.datasets[0].data = cpuData;
 
             // Update network speed graphs
-            const networkTableBody = document.getElementById('networkTable').querySelector('tbody');
-            networkTableBody.innerHTML = ''; // Clear previous content
-
             data.networks.filter(network => network.name.startsWith('w')).forEach(network => {
-                const speed_row = document.createElement('tr');
-                const data_row = document.createElement('tr');
-                const speed_cel = document.createElement('td');
-                speed_cel.textContent = 'Speed (KIB/s)'
-                const data_cel = document.createElement('td');
-                data_cel.textContent = 'Total (GB)'
-
-                const networkNameCell = document.createElement('td');
-                networkNameCell.textContent = network.name;
-
-                const totalDownGB = (network.down / 1024 / 1024 / 1024).toFixed(2); // Convert to GB
-                const totalUpGB = (network.up / 1024 / 1024 / 1024).toFixed(2); // Convert to GB
-
-                const downCell = document.createElement('td');
-                downCell.textContent = totalDownGB + ' GB';
-
-                const upCell = document.createElement('td');
-                upCell.textContent = totalUpGB + ' GB';
-
-
                 const prevNetwork = prevNetworkData[network.name] || { down: 0, up: 0 };
                 const downSpeed = ((network.down - prevNetwork.down) / 1024) / 2.5; // Speed in KiB/s
                 const upSpeed = ((network.up - prevNetwork.up) / 1024) / 2.5; // Speed in KiB/s
-
-                const downSpeedCell = document.createElement('td');
-                downSpeedCell.textContent = downSpeed.toFixed(2) + ' KiB/s';
-
-                const upSpeedCell = document.createElement('td');
-                upSpeedCell.textContent = upSpeed.toFixed(2) + ' KiB/s';
-
-                data_row.appendChild(data_cel);
-                data_row.appendChild(downCell);
-                data_row.appendChild(upCell);
-                speed_row.appendChild(speed_cel);
-                speed_row.appendChild(downSpeedCell);
-                speed_row.appendChild(upSpeedCell);
-
-                networkTableBody.appendChild(speed_row);
-                networkTableBody.appendChild(data_row);
 
                 upSpeedData.push(upSpeed);
                 downSpeedData.push(downSpeed);

@@ -8,8 +8,6 @@ use tokio::time::{sleep, Duration};
 struct SystemMetrics {
     total_memory: u64,
     used_memory: u64,
-    total_swap: u64,
-    used_swap: u64,
     cpu_usage: f32,
     cpu_count: usize,
     disks: Vec<DiskInfo>,
@@ -69,8 +67,6 @@ async fn main() {
             let metrics = SystemMetrics {
                 total_memory: system.total_memory(),
                 used_memory: system.used_memory(),
-                total_swap: system.total_swap(),
-                used_swap: system.used_swap(),
                 cpu_usage,
                 cpu_count,
                 disks,
