@@ -195,7 +195,6 @@ const upSpeedChart = new Chart(upSpeedCtx, {
 let timeElapsed = 0; // To keep track of time for the x-axis
 let memoryData = [];
 let cpuData = [];
-let cpuThreadData = []; // To store CPU thread usage data
 let upSpeedData = [];
 let downSpeedData = [];
 let prevNetworkData = {}; // To store previous network data for speed calculation
@@ -210,16 +209,14 @@ async function fetchMetrics() {
         const data = await response.json();
 
         // Update memory usage graph
-        memoryData.push((data.used_memory / data.total_memory) * 100); // Convert to MB
-        if (memoryData.length > 50) { memoryData.shift(); } // Limit to 50 points
-        memoryChart.data.labels.push(timeElapsed);
-        memoryChart.data.datasets[0].data = memoryData;
+        memoryChart.data.labels = Array.from({ length: data.memory_history.length }, (_, i) => i);
+        memoryChart.data.datasets[0].data = data.memory_history;
 
         // Update CPU usage graph
-        cpuData.push(data.cpu_usage);
-        if (cpuData.length > 50) { cpuData.shift(); } // Limit to 50 points
-        cpuChart.data.labels.push(timeElapsed);
-        cpuChart.data.datasets[0].data = cpuData;
+        cpuChart.data.labels = Array.from({ length: data.cpu_history.length }, (_, i) => i);
+        cpuChart.data.datasets[0].data = data.cpu_history;
+
+
 
         // Update CPU threads list
         const cpuThreadsTableBody = document.getElementById('cpuThreadsTableBody');
