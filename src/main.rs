@@ -9,7 +9,7 @@ struct SystemMetrics {
     total_memory: u64,
     used_memory: u64,
     cpu_usage: f32,
-    cpu_count: usize,
+    cpus: Vec<f32>,
     disks: Vec<DiskInfo>,
     networks: Vec<NetworkInfo>
 }
@@ -43,7 +43,10 @@ async fn main() {
             system.refresh_all();
 
             let cpu_usage = system.global_cpu_info().cpu_usage();
-            let cpu_count = system.cpus().len();
+            let mut cpus = Vec::new();
+            for cpu in system.cpus() {
+                cpus.push(cpu.cpu_usage())
+            }
 
 
             // Gather disk information
@@ -68,7 +71,7 @@ async fn main() {
                 total_memory: system.total_memory(),
                 used_memory: system.used_memory(),
                 cpu_usage,
-                cpu_count,
+                cpus,
                 disks,
                 networks
             };

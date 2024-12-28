@@ -152,6 +152,55 @@
             z-index: 1; /* Ensures it stays above other elements */
         }
 
+        .cpu-threads-container {
+            width: 45%;
+            margin: 0 auto;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            height: 350px; /* Fixed height for the container */
+            background-color: #fff; /* Added background to the graph */
+            border-radius: 8px; /* Rounded corners for the container */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow: auto;
+        }
+        .cpu-thread-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .cpu-progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .cpu-threads-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        .cpu-threads-table th, .cpu-threads-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .cpu-threads-table th {
+            background-color: #8c38ff;
+            color: white;
+        }
+
+        .cpu-progress-bar {
+            height: 20px;
+            background-color: #8c38ff;
+            transition: width 0.3s ease;
+        }
+
+
     </style>
 </head>
 <body>
@@ -184,6 +233,22 @@
     <div class="chart-container">
         <h2>CPU Usage</h2>
         <canvas id="cpuChart"></canvas>
+    </div>
+
+    <!-- CPU Thread information -->
+    <div class="cpu-threads-container">
+        <h2>CPU Threads</h2>
+
+        <table class="cpu-threads-table">
+            <colgroup>
+                <col style="width: 20%;">
+                <col style="width: 30%;">
+                <col style="width: 50%;">
+            </colgroup>
+            <tbody id="cpuThreadsTableBody">
+            <!-- Rows will be dynamically populated -->
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -401,6 +466,7 @@
     let timeElapsed = 0; // To keep track of time for the x-axis
     let memoryData = [];
     let cpuData = [];
+    let cpuThreadData = []; // To store CPU thread usage data
     let upSpeedData = [];
     let downSpeedData = [];
     let prevNetworkData = {}; // To store previous network data for speed calculation
@@ -425,6 +491,46 @@
             if (cpuData.length > 50) { cpuData.shift(); } // Limit to 50 points
             cpuChart.data.labels.push(timeElapsed);
             cpuChart.data.datasets[0].data = cpuData;
+
+            // Update CPU threads list
+            const cpuThreadsTableBody = document.getElementById('cpuThreadsTableBody');
+            cpuThreadsTableBody.innerHTML = ''; // Clear the existing table rows
+
+            data.cpus.forEach((cpu, index) => {
+                const row = document.createElement('tr');
+
+                // Thread name
+                const threadNameCell = document.createElement('td');
+                threadNameCell.textContent = `T${index + 1}`;
+                row.appendChild(threadNameCell);
+
+                // Usage percentage
+                const usageCell = document.createElement('td');
+                usageCell.textContent = `${Math.round(cpu)}%`;
+                row.appendChild(usageCell);
+
+                // Progress bar
+                const progressCell = document.createElement('td');
+                const progressBarContainer = document.createElement('div');
+                progressBarContainer.classList.add('cpu-progress-bar-container');
+                const progressBar = document.createElement('div');
+                progressBar.classList.add('cpu-progress-bar');
+                progressBar.style.width = `${Math.round(cpu)}%`;
+
+                const cpuLoad = Math.round(cpu);
+                if (cpuLoad < 50) {
+                    progressBar.style.backgroundColor = `rgb(${0 + (cpuLoad * 5)}, 255, 0)`; // Green to Yellow
+                } else {
+                    progressBar.style.backgroundColor = `rgb(255, ${255 - ((cpuLoad - 50) * 5)}, 0)`; // Yellow to Red
+                }
+
+                progressBarContainer.appendChild(progressBar);
+                progressCell.appendChild(progressBarContainer);
+                row.appendChild(progressCell);
+
+                cpuThreadsTableBody.appendChild(row);
+            });
+
 
             // Update network interface list if not already done
             // Populate the dropdown with network interface options (if not already populated)
