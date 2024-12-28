@@ -82,9 +82,10 @@ async fn main() {
     // Serve static HTML/JS
     let html = warp::path::end()
         .and(warp::fs::file("index.html"));
+    let static_files = warp::path("static").and(warp::fs::dir("static"));
 
     // Combine routes
-    let routes = system_metrics_route.or(html);
+    let routes = system_metrics_route.or(html).or(static_files);
 
     // Periodically refresh system info
     let sysinfo_updater = sysinfo.clone();

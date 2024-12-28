@@ -1,0 +1,189 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f4f7fc;
+}
+h1 {
+    color: #333;
+}
+.chart-container {
+    width: 80%;
+    margin: 0 auto;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    height: 350px; /* Fixed height for the container */
+    background-color: #fff; /* Added background to the graph */
+    border-radius: 8px; /* Rounded corners for the container */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+canvas {
+    height: 80% !important; /* Ensure canvas fills the container */
+    width: 100% !important;  /* Ensure canvas fills the container */
+}
+.metrics-container {
+    width: 80%;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 30px; /* Space between disk data and network table */
+    margin-top: 15px;
+}
+.disk-list {
+    width: 45%; /* Adjust width to ensure they fit side by side */
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+.disk-list h2, .network-table h2 {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+    color: #333;
+    text-align: center; /* Center the header */
+}
+.disk-item {
+    margin-bottom: 20px;
+}
+.disk-name, .network-name {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+.progress-bar-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+.progress-bar {
+    height: 20px;
+    background-color: #8c38ff;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+.disk-space-info, .network-data-info {
+    text-align: center;
+    margin-top: 5px;
+    font-size: 1em;
+}
+/* Refresh Rate Input and Button Container */
+.refresh-rate-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.refresh-rate-label {
+    font-size: 1.2em;
+    color: #333;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.refresh-rate-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between the input and button */
+}
+.refresh-rate-input {
+
+    width: 220px;
+    padding: 10px 12px;
+    font-size: 1em;
+    color: #333;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.refresh-rate-input:focus {
+    outline: none;
+    border-color: #8c38ff;
+    box-shadow: 0 0 4px rgba(140, 56, 255, 0.6);
+}
+
+.refresh-rate-input::placeholder {
+    color: #aaa;
+    font-style: italic;
+}
+
+.refresh-rate-button {
+    padding: 10px 20px;
+    background-color: #8c38ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.refresh-rate-button:hover {
+    background-color: #7326d1;
+    box-shadow: 0 4px 12px rgba(140, 56, 255, 0.3);
+}
+
+.refresh-rate-button:active {
+    background-color: #5b1ca9;
+    box-shadow: 0 2px 8px rgba(140, 56, 255, 0.5);
+}
+
+.chart-container .network-dropdown {
+    position: absolute;
+    top: 35px;
+    right: 20px;
+    z-index: 1; /* Ensures it stays above other elements */
+}
+
+.cpu-threads-container {
+    width: 45%;
+    margin: 0 auto;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    height: 350px; /* Fixed height for the container */
+    background-color: #fff; /* Added background to the graph */
+    border-radius: 8px; /* Rounded corners for the container */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    overflow: auto;
+}
+.cpu-thread-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+.cpu-progress-bar-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.cpu-threads-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.cpu-threads-table th, .cpu-threads-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+.cpu-threads-table th {
+    background-color: #8c38ff;
+    color: white;
+}
+
+.cpu-progress-bar {
+    height: 20px;
+    background-color: #8c38ff;
+    transition: width 0.3s ease;
+}
