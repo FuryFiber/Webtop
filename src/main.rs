@@ -1,4 +1,5 @@
-use sysinfo::{System, SystemExt, CpuExt, DiskExt,  NetworksExt, NetworkExt};
+use std::collections::HashMap;
+use sysinfo::{System, SystemExt, CpuExt, DiskExt, NetworksExt, NetworkExt};
 use warp::Filter;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
@@ -13,7 +14,8 @@ struct SystemMetrics {
     disks: Vec<DiskInfo>,
     networks: Vec<NetworkInfo>,
     memory_history: Vec<f32>,
-    cpu_history: Vec<f32>
+    cpu_history: Vec<f32>,
+    network_history: HashMap<String, NetworkHistory>,
 }
 
 #[derive(Serialize, Debug)]
@@ -30,6 +32,11 @@ struct NetworkInfo {
     up: u64,
 }
 
+#[derive(Serialize, Debug, Clone)]
+struct NetworkHistory {
+    up: Vec<u64>,
+    down: Vec<u64>,
+}
 
 struct MetricsState {
     system: System,
@@ -45,12 +52,16 @@ async fn main() {
         cpu_history: Vec::new(),
     }));
 
+    let network_state = Arc::new(Mutex::new(HashMap::new()));
+
     // Endpoint to fetch system metrics
     let metrics_state_clone = metrics_state.clone();
+    let network_state_clone = network_state.clone();
     let system_metrics_route = warp::path("system_metrics")
         .and(warp::get())
         .map(move || {
             let mut state = metrics_state_clone.lock().unwrap();
+            let mut network_state_inner = network_state_clone.lock().unwrap();
             state.system.refresh_all();
 
             let cpu_usage = state.system.global_cpu_info().cpu_usage();
@@ -90,6 +101,25 @@ async fn main() {
                 }
             }).collect();
 
+            // Update network history
+            for (name, data) in state.system.networks() {
+                let prev = network_state_inner.entry(name.clone())
+                    .or_insert(NetworkHistory {
+                        up: Vec::new(),
+                        down: Vec::new(),
+                    });
+
+                prev.up.push(data.total_transmitted());
+                prev.down.push(data.total_received());
+
+                if prev.up.len() > 50 {
+                    prev.up.remove(0);
+                }
+                if prev.down.len() > 50 {
+                    prev.down.remove(0);
+                }
+            }
+
             let metrics = SystemMetrics {
                 total_memory: state.system.total_memory(),
                 used_memory: state.system.used_memory(),
@@ -98,7 +128,8 @@ async fn main() {
                 disks,
                 networks,
                 memory_history: state.memory_history.clone(),
-                cpu_history: state.cpu_history.clone()
+                cpu_history: state.cpu_history.clone(),
+                network_history: network_state_inner.clone()
             };
 
             warp::reply::json(&metrics)

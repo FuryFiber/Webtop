@@ -36,8 +36,8 @@ const currentSpeedPlugin = {
 
         // Position the value near the top right
         const { top, right } = chart.chartArea;
-        ctx.fillText(`Up: ${Math.round(up_speed * 100) / 100} KiB/s`, right-150, top + 20);
-        ctx.fillText(`Down: ${Math.round(down_speed * 100) / 100} KiB/s`, right-150, top - 10);
+        ctx.fillText(`Up: ${Math.round(up_speed * 100) / 100} KiB/s`, right-150, top -10);
+        ctx.fillText(`Down: ${Math.round(down_speed * 100) / 100} KiB/s`, right-150, top +20);
 
         ctx.restore();
     }
@@ -133,7 +133,7 @@ const cpuChart = new Chart(cpuCtx, {
             legend: {
                 display: true
             }
-        }
+        },
     },
     plugins: [currentUsagePlugin]
 });
@@ -192,31 +192,123 @@ const upSpeedChart = new Chart(upSpeedCtx, {
     plugins: [currentSpeedPlugin]
 });
 
-let timeElapsed = 0; // To keep track of time for the x-axis
-let memoryData = [];
-let cpuData = [];
-let upSpeedData = [];
-let downSpeedData = [];
-let prevNetworkData = {}; // To store previous network data for speed calculation
-let networkInterfaces = []; // List of available network interfaces
-let currentInterfaceIndex = 0; // Index of the currently selected interface
 let refreshInterval = 2500;
-let intervalId = setInterval(fetchMetrics, refreshInterval);
 
+
+async function fetchHistory() {
+    try {
+        // Fetch the historical data from the backend
+        const response = await fetch('/system_metrics');
+        const data = await response.json();
+
+        // Populate the memory chart with historical data
+        memoryChart.data.labels = data.memory_history.map((_, i) => i); // Time labels
+        memoryChart.data.datasets[0].data = data.memory_history;
+
+        // Populate the CPU chart with historical data
+        cpuChart.data.labels = data.cpu_history.map((_, i) => i); // Time labels
+        cpuChart.data.datasets[0].data = data.cpu_history;
+
+        // Update network interface list if not already done
+        // Populate the dropdown with network interface options (if not already populated)
+        const networkSelect = document.getElementById('networkInterface');
+        if (networkSelect.options.length === 0) {
+            data.networks.forEach(network => {
+                const option = document.createElement('option');
+                option.value = network.name;
+                option.textContent = network.name;
+                networkSelect.appendChild(option);
+            });
+        }
+        // Get the selected network interface
+        const selectedInterface = networkSelect.value;
+        const networkHistory = data.network_history[selectedInterface]; // Access its history
+
+        const totalTransmitted = networkHistory.up; // Extract total transmitted
+        const totalReceived = networkHistory.down; // Extract total received
+
+        // Calculate speeds (assuming evenly spaced intervals between records)
+        const upSpeeds = totalTransmitted.map((value, index) => index === 0 ? 0 : (value - totalTransmitted[index - 1]) / 1024); // Convert to KiB/s
+        const downSpeeds = totalReceived.map((value, index) => index === 0 ? 0 : (value - totalReceived[index - 1]) / 1024); // Convert to KiB/s
+
+        // Populate the chart
+        upSpeedChart.data.labels = upSpeeds.map((_, i) => i); // Time labels
+        upSpeedChart.data.datasets[0].data = upSpeeds; // Up speeds
+        upSpeedChart.data.datasets[1].data = downSpeeds; // Down speeds
+
+        // Update the charts after populating them
+        memoryChart.update();
+        cpuChart.update();
+        upSpeedChart.update();
+    } catch (error) {
+        console.error("Error fetching historical metrics", error);
+    }
+}
 async function fetchMetrics() {
     try {
         const response = await fetch('/system_metrics');
         const data = await response.json();
 
-        // Update memory usage graph
-        memoryChart.data.labels = Array.from({ length: data.memory_history.length }, (_, i) => i);
-        memoryChart.data.datasets[0].data = data.memory_history;
+        // Add a new memory data point
+        const newMemoryPoint = data.memory_history[data.memory_history.length - 1];
+        if (data.memory_history.length < 50){
+            memoryChart.data.labels = data.memory_history.map((_, i) => i); // Time labels
+            memoryChart.data.datasets[0].data.push(newMemoryPoint); // Add the new data point
+        }
+        else {
+            memoryChart.data.datasets[0].data.shift(); // Remove the first data point
+            memoryChart.data.datasets[0].data.push(newMemoryPoint);
+        }
 
-        // Update CPU usage graph
-        cpuChart.data.labels = Array.from({ length: data.cpu_history.length }, (_, i) => i);
-        cpuChart.data.datasets[0].data = data.cpu_history;
+        // Add a new CPU data point
+        const newCpuPoint = data.cpu_history[data.cpu_history.length - 1];
+        if (data.cpu_history.length < 50){
+            cpuChart.data.labels = data.cpu_history.map((_, i) => i); // Time labels
+            cpuChart.data.datasets[0].data.push(newCpuPoint); // Add the new data point
+        }
+        else {
+            cpuChart.data.datasets[0].data.shift(); // Remove the first data point
+            cpuChart.data.datasets[0].data.push(newCpuPoint);
+        }
 
+        // Update network interface list if not already done
+        // Populate the dropdown with network interface options (if not already populated)
+        const networkSelect = document.getElementById('networkInterface');
+        if (networkSelect.options.length === 0) {
+            data.networks.forEach(network => {
+                const option = document.createElement('option');
+                option.value = network.name;
+                option.textContent = network.name;
+                networkSelect.appendChild(option);
+            });
+        }
+        // Get the selected network interface
+        const selectedInterface = networkSelect.value;
+        const networkHistory = data.network_history[selectedInterface]; // Access its history
 
+        const totalTransmitted = networkHistory.up; // Extract total transmitted
+        const totalReceived = networkHistory.down; // Extract total received
+
+        // Calculate the latest speeds (assuming last entry is the newest)
+        const newUpSpeed = (totalTransmitted[totalTransmitted.length - 1] - totalTransmitted[totalTransmitted.length - 2]) / 1024; // Convert to KiB/s
+        const newDownSpeed = (totalReceived[totalReceived.length - 1] - totalReceived[totalReceived.length - 2]) / 1024; // Convert to KiB/s
+
+        if (totalTransmitted.length < 50){
+            upSpeedChart.data.labels = totalTransmitted.map((_, i) => i); // Time labels
+            upSpeedChart.data.datasets[0].data.push(newUpSpeed); // Add the new data point
+            upSpeedChart.data.datasets[1].data.push(newDownSpeed); // Add the new data point
+        }
+        else {
+            upSpeedChart.data.datasets[0].data.shift(); // Remove the first data point
+            upSpeedChart.data.datasets[0].data.push(newUpSpeed);
+            upSpeedChart.data.datasets[1].data.shift(); // Remove the first data point
+            upSpeedChart.data.datasets[1].data.push(newDownSpeed);
+        }
+
+        // Refresh the charts
+        memoryChart.update();
+        cpuChart.update();
+        upSpeedChart.update();
 
         // Update CPU threads list
         const cpuThreadsTableBody = document.getElementById('cpuThreadsTableBody');
@@ -257,43 +349,6 @@ async function fetchMetrics() {
             cpuThreadsTableBody.appendChild(row);
         });
 
-
-        // Update network interface list if not already done
-        // Populate the dropdown with network interface options (if not already populated)
-        const networkSelect = document.getElementById('networkInterface');
-        if (networkSelect.options.length === 0) {
-            data.networks.forEach(network => {
-                const option = document.createElement('option');
-                option.value = network.name;
-                option.textContent = network.name;
-                networkSelect.appendChild(option);
-            });
-        }
-        // Get the selected network interface
-        const selectedInterface = networkSelect.value;
-        const network = data.networks.find(net => net.name === selectedInterface);
-
-        // Update network speed graphs
-        if (network) {
-            const prevNetwork = prevNetworkData[network.name] || { down: 0, up: 0 };
-            const downSpeed = ((network.down - prevNetwork.down) / 1024) / 2.5; // Speed in KiB/s
-            const upSpeed = ((network.up - prevNetwork.up) / 1024) / 2.5; // Speed in KiB/s
-
-            upSpeedData.push(upSpeed);
-            downSpeedData.push(downSpeed);
-
-            // Limit data points for the graphs
-            if (upSpeedData.length > 50) { upSpeedData.shift(); }
-            if (downSpeedData.length > 50) { downSpeedData.shift(); }
-
-            upSpeedChart.data.labels.push(timeElapsed);
-            upSpeedChart.data.datasets[0].data = upSpeedData;
-            upSpeedChart.data.datasets[1].data = downSpeedData;
-
-            // Save current network data for next iteration
-            prevNetworkData[network.name] = { down: network.down, up: network.up };
-        }
-
         // Update the disk usage progress bars
         const diskListContainer = document.getElementById('diskList');
         diskListContainer.innerHTML = ''; // Clear previous content
@@ -324,20 +379,18 @@ async function fetchMetrics() {
             diskListContainer.appendChild(diskItem);
         });
 
-        // Refresh the charts
-        memoryChart.update();
-        cpuChart.update();
-        upSpeedChart.update();
-
-        timeElapsed += (refreshInterval / 1000); // Increase time (in seconds)
     } catch (error) {
         console.error("Error fetching system metrics", error);
     }
 }
 
 function startFetchingMetrics() {
-    clearInterval(intervalID); // Clear the previous interval
-    intervalID = setInterval(fetchMetrics, refreshInterval); // Set the new interval
+    setInterval(fetchMetrics, refreshInterval); // Set the new interval
+}
+
+async function initializeCharts() {
+    await fetchHistory(); // Populate the graphs with historical data
+    //setInterval(fetchLatest, refreshInterval); // Start fetching latest data points periodically
 }
 
 
@@ -356,16 +409,6 @@ document.getElementById('applyRate').addEventListener('click', () => {
     }
 });
 
-function cycleInterface() {
-    if (networkInterfaces.length > 0) {
-        currentInterfaceIndex = (currentInterfaceIndex + 1) % networkInterfaces.length;
-        document.getElementById('selectedInterface').textContent = `Interface: ${networkInterfaces[currentInterfaceIndex]}`;
-        upSpeedData = [];
-        downSpeedData = [];
-    }
-}
-
-document.getElementById('cycleInterface').addEventListener('click', cycleInterface);
 
 startFetchingMetrics();
-fetchMetrics(); // Initial fetch
+initializeCharts();
