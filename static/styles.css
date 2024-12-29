@@ -139,7 +139,17 @@ canvas {
     right: 20px;
     z-index: 1; /* Ensures it stays above other elements */
 }
-
+.disks-container {
+    width: 45%;
+    margin: 0 auto;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    height: 350px; /* Fixed height for the container */
+    background-color: #fff; /* Added background to the graph */
+    border-radius: 8px; /* Rounded corners for the container */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
 .cpu-threads-container {
     width: 45%;
     margin: 0 auto;
@@ -152,6 +162,7 @@ canvas {
     padding: 20px;
     overflow: auto;
 }
+
 .cpu-thread-item {
     display: flex;
     justify-content: space-between;
@@ -187,3 +198,56 @@ canvas {
     background-color: #8c38ff;
     transition: width 0.3s ease;
 }
+
+/* General styles for the system info list */
+ul.system-info {
+    list-style-type: none; /* Remove default list bullets */
+    padding: 0;
+    margin: 0;
+    background-color: #f9f9f9; /* Light gray background */
+    border-radius: 8px; /* Rounded corners */
+    max-width: 400px; /* Limit width */
+    margin: 20px auto; /* Center the list with some margin */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
+}
+
+/* List item styles */
+ul.system-info li {
+    display: flex;
+    justify-content: space-between; /* Space out the label and value */
+    padding: 12px 20px;
+    border-bottom: 1px solid #e0e0e0; /* Light gray separator between items */
+    font-size: 16px; /* Text size */
+    color: #333; /* Dark text color */
+}
+
+/* Remove bottom border for last item */
+ul.system-info li:last-child {
+    border-bottom: none;
+}
+
+/* Label styles */
+ul.system-info .label {
+    font-weight: bold;
+    color: #007bff; /* Blue color for the labels */
+    text-transform: uppercase; /* Capitalize the label text */
+    width: 40%; /* Make sure label takes up less space than the value */
+    font-size: 14px; /* Slightly smaller font size for labels */
+}
+
+/* Value styles */
+ul.system-info li span {
+    flex-grow: 1; /* Make sure value fills the remaining space */
+    text-align: right; /* Align values to the right */
+    color: #555; /* Slightly lighter color for values */
+}
+
+/* Hover effect for list items */
+ul.system-info li:hover {
+    background-color: #e9f5ff; /* Light blue background on hover */
+    cursor: pointer; /* Pointer cursor on hover */
+    transform: scale(1.02); /* Slight scale effect for hover */
+    transition: transform 0.3s ease, background-color 0.3s ease; /* Smooth transition */
+}
+
+

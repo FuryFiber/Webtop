@@ -193,7 +193,42 @@ const upSpeedChart = new Chart(upSpeedCtx, {
 });
 
 let refreshInterval = 2500;
+let intervalId;
+let prevSelected = "";
 
+// Fetch system info from the /system_general endpoint and populate the System Info section
+async function fetchSystemInfo() {
+    try {
+        const response = await fetch('/system_general');
+        const systemInfo = await response.json();
+
+        const sysInfoContainer = document.getElementById('sysinfo');
+        sysInfoContainer.innerHTML = ''; // Clear previous content
+
+        // Populate with new data
+        const infoList = document.createElement('ul');
+        infoList.classList.add("system-info")
+
+        const infoItems = [
+            { label: 'Name', value: systemInfo.name },
+            { label: 'Kernel Version', value: systemInfo.kernel_version },
+            { label: 'OS Version', value: systemInfo.os_version },
+            { label: 'Hostname', value: systemInfo.hostname },
+            { label: 'Total Memory', value: `${(systemInfo.total_memory / 1024 / 1024 / 1024).toFixed(2)} GB` },
+            { label: 'CPUs', value: systemInfo.cpus }
+        ];
+
+        infoItems.forEach(item => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${item.label}: ${item.value}`;
+            infoList.appendChild(listItem);
+        });
+
+        sysInfoContainer.appendChild(infoList);
+    } catch (error) {
+        console.error('Error fetching system info', error);
+    }
+}
 
 async function fetchHistory() {
     try {
@@ -284,26 +319,45 @@ async function fetchMetrics() {
         }
         // Get the selected network interface
         const selectedInterface = networkSelect.value;
-        const networkHistory = data.network_history[selectedInterface]; // Access its history
+        if (prevSelected !== selectedInterface) {
+            // Get the selected network interface
+            const networkHistory = data.network_history[selectedInterface]; // Access its history
 
-        const totalTransmitted = networkHistory.up; // Extract total transmitted
-        const totalReceived = networkHistory.down; // Extract total received
+            const totalTransmitted = networkHistory.up; // Extract total transmitted
+            const totalReceived = networkHistory.down; // Extract total received
 
-        // Calculate the latest speeds (assuming last entry is the newest)
-        const newUpSpeed = (totalTransmitted[totalTransmitted.length - 1] - totalTransmitted[totalTransmitted.length - 2]) / 1024; // Convert to KiB/s
-        const newDownSpeed = (totalReceived[totalReceived.length - 1] - totalReceived[totalReceived.length - 2]) / 1024; // Convert to KiB/s
+            // Calculate speeds (assuming evenly spaced intervals between records)
+            const upSpeeds = totalTransmitted.map((value, index) => index === 0 ? 0 : (value - totalTransmitted[index - 1]) / 1024); // Convert to KiB/s
+            const downSpeeds = totalReceived.map((value, index) => index === 0 ? 0 : (value - totalReceived[index - 1]) / 1024); // Convert to KiB/s
 
-        if (totalTransmitted.length < 50){
-            upSpeedChart.data.labels = totalTransmitted.map((_, i) => i); // Time labels
-            upSpeedChart.data.datasets[0].data.push(newUpSpeed); // Add the new data point
-            upSpeedChart.data.datasets[1].data.push(newDownSpeed); // Add the new data point
+            // Populate the chart
+            upSpeedChart.data.labels = upSpeeds.map((_, i) => i); // Time labels
+            upSpeedChart.data.datasets[0].data = upSpeeds; // Up speeds
+            upSpeedChart.data.datasets[1].data = downSpeeds; // Down speeds
         }
         else {
-            upSpeedChart.data.datasets[0].data.shift(); // Remove the first data point
-            upSpeedChart.data.datasets[0].data.push(newUpSpeed);
-            upSpeedChart.data.datasets[1].data.shift(); // Remove the first data point
-            upSpeedChart.data.datasets[1].data.push(newDownSpeed);
+            const networkHistory = data.network_history[selectedInterface]; // Access its history
+
+            const totalTransmitted = networkHistory.up; // Extract total transmitted
+            const totalReceived = networkHistory.down; // Extract total received
+
+            // Calculate the latest speeds (assuming last entry is the newest)
+            const newUpSpeed = (totalTransmitted[totalTransmitted.length - 1] - totalTransmitted[totalTransmitted.length - 2]) / 1024; // Convert to KiB/s
+            const newDownSpeed = (totalReceived[totalReceived.length - 1] - totalReceived[totalReceived.length - 2]) / 1024; // Convert to KiB/s
+
+            if (totalTransmitted.length < 50){
+                upSpeedChart.data.labels = totalTransmitted.map((_, i) => i); // Time labels
+                upSpeedChart.data.datasets[0].data.push(newUpSpeed); // Add the new data point
+                upSpeedChart.data.datasets[1].data.push(newDownSpeed); // Add the new data point
+            }
+            else {
+                upSpeedChart.data.datasets[0].data.shift(); // Remove the first data point
+                upSpeedChart.data.datasets[0].data.push(newUpSpeed);
+                upSpeedChart.data.datasets[1].data.shift(); // Remove the first data point
+                upSpeedChart.data.datasets[1].data.push(newDownSpeed);
+            }
         }
+        prevSelected = selectedInterface;
 
         // Refresh the charts
         memoryChart.update();
@@ -385,7 +439,7 @@ async function fetchMetrics() {
 }
 
 function startFetchingMetrics() {
-    setInterval(fetchMetrics, refreshInterval); // Set the new interval
+    intervalId = setInterval(fetchMetrics, refreshInterval); // Set the new interval
 }
 
 async function initializeCharts() {
@@ -409,6 +463,7 @@ document.getElementById('applyRate').addEventListener('click', () => {
     }
 });
 
-
+fetchSystemInfo();
+fetchMetrics();
 startFetchingMetrics();
 initializeCharts();

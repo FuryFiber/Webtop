@@ -18,6 +18,16 @@ struct SystemMetrics {
     network_history: HashMap<String, NetworkHistory>,
 }
 
+#[derive(Serialize)]
+struct SystemGeneral {
+    name: String,
+    kernel_version: String,
+    os_version: String,
+    hostname: String,
+    total_memory: u64,
+    cpus: u64,
+}
+
 #[derive(Serialize, Debug)]
 struct DiskInfo {
     name: String,
@@ -135,6 +145,23 @@ async fn main() {
             warp::reply::json(&metrics)
         });
 
+    let system_genera_clone = metrics_state.clone();
+    let system_general_route = warp::path("system_general")
+        .and(warp::get())
+        .map(move || {
+            let state = system_genera_clone.lock().unwrap();
+            let system_general = SystemGeneral{
+                name: state.system.name().unwrap_or("".to_string()),
+                kernel_version: state.system.kernel_version().unwrap_or("".to_string()),
+                os_version: state.system.os_version().unwrap_or("".to_string()),
+                hostname: state.system.host_name().unwrap_or("".to_string()),
+                total_memory: state.system.total_memory(),
+                cpus: state.system.cpus().len() as u64,
+            };
+
+            warp::reply::json(&system_general)
+        });
+
     // Serve static HTML/JS
     let index = warp::path::end()
         .and(warp::fs::file("index.html"));
@@ -142,7 +169,7 @@ async fn main() {
         .and(warp::fs::dir("static"));
 
     // Combine routes
-    let routes = system_metrics_route.or(index).or(static_files);
+    let routes = system_metrics_route.or(system_general_route).or(index).or(static_files);
 
     // Periodically refresh system info
     let metrics_state_updater = metrics_state.clone();
