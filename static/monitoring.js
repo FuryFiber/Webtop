@@ -36,8 +36,8 @@ const currentSpeedPlugin = {
 
         // Position the value near the top right
         const { top, right } = chart.chartArea;
-        ctx.fillText(`Up: ${Math.round(up_speed * 100) / 100} KiB/s`, right-150, top -10);
-        ctx.fillText(`Down: ${Math.round(down_speed * 100) / 100} KiB/s`, right-150, top +20);
+        ctx.fillText(`Up: ${Math.round(up_speed * 100) / 100} KiB/s`, right-130, top -10);
+        ctx.fillText(`Down: ${Math.round(down_speed * 100) / 100} KiB/s`, right-130, top +20);
 
         ctx.restore();
     }

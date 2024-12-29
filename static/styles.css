@@ -137,6 +137,7 @@ canvas {
     position: absolute;
     top: 35px;
     right: 20px;
+    width: 150px;
     z-index: 1; /* Ensures it stays above other elements */
 }
 .disks-container {
