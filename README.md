@@ -1,3 +1,3 @@
 # Webtop
-Hardware monitoring designed for servers, with webui, written in rust.
-![](res/Screenshot from 2024-12-28 11-30-06.png)
+Hardware monitoring designed for servers, with webui.
+![](res/Screenshot%20from%202024-12-29%2013-46-56.png)
