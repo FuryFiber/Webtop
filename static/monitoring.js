@@ -556,6 +556,81 @@ function getDragAfterElement(row, x) {
     }, { offsetX: Number.NEGATIVE_INFINITY }).element;
 }
 
+// Function to handle resizing
+function setupResizeHandles(item) {
+    const leftHandle = item.querySelector('.resize-handle-left');
+    const rightHandle = item.querySelector('.resize-handle-right');
+
+    let startX, startWidth, startAdjacentWidth;
+
+    // Resize from the left
+    leftHandle.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        startX = e.clientX;
+        startWidth = item.offsetWidth;
+        const adjacentItem = item.previousElementSibling;
+        if (adjacentItem) {
+            startAdjacentWidth = adjacentItem.offsetWidth;
+        }
+
+        document.addEventListener('mousemove', onLeftResize);
+        document.addEventListener('mouseup', stopResize);
+    });
+
+    // Resize from the right
+    rightHandle.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        startX = e.clientX;
+        startWidth = item.offsetWidth;
+        const adjacentItem = item.nextElementSibling;
+        if (adjacentItem) {
+            startAdjacentWidth = adjacentItem.offsetWidth;
+        }
+
+        document.addEventListener('mousemove', onRightResize);
+        document.addEventListener('mouseup', stopResize);
+    });
+
+    function onLeftResize(e) {
+        const deltaX = e.clientX - startX;
+        const newWidth = startWidth - deltaX;
+        const newAdjacentWidth = startAdjacentWidth + deltaX;
+
+        if (newWidth > 300 && newAdjacentWidth > 300) { // Minimum width
+            item.style.width = `${newWidth}px`;
+            const adjacentItem = item.previousElementSibling;
+            if (adjacentItem) {
+                adjacentItem.style.width = `${newAdjacentWidth}px`;
+            }
+        }
+    }
+
+    function onRightResize(e) {
+        const deltaX = e.clientX - startX;
+        const newWidth = startWidth + deltaX;
+        const newAdjacentWidth = startAdjacentWidth - deltaX;
+
+        if (newWidth > 300 && newAdjacentWidth > 300) { // Minimum width
+            item.style.width = `${newWidth}px`;
+            const adjacentItem = item.nextElementSibling;
+            if (adjacentItem) {
+                adjacentItem.style.width = `${newAdjacentWidth}px`;
+            }
+        }
+    }
+
+    function stopResize() {
+        document.removeEventListener('mousemove', onLeftResize);
+        document.removeEventListener('mousemove', onRightResize);
+        document.removeEventListener('mouseup', stopResize);
+    }
+}
+
+// Set up resize handles for all items
+document.querySelectorAll('.grid-item').forEach(item => {
+    setupResizeHandles(item);
+});
+
 // Initialize the grid layout
 function initializeGrid() {
     const gridContainer = document.querySelector('.grid-container');

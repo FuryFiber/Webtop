@@ -33,20 +33,24 @@
 <div class="grid-container">
     <div class="grid-row">
         <div class="grid-item" draggable="true">
+            <div class="resize-handle resize-handle-left"></div>
+            <div class="resize-handle resize-handle-right"></div>
             <div class="chart-container">
                 <h2>Memory Usage</h2>
                 <canvas id="memoryChart"></canvas>
             </div>
         </div>
         <div class="grid-item" draggable="true">
+            <div class="resize-handle resize-handle-left"></div>
+            <div class="resize-handle resize-handle-right"></div>
             <div class="chart-container">
                 <h2>CPU Usage</h2>
                 <canvas id="cpuChart"></canvas>
             </div>
         </div>
-    </div>
-    <div class="grid-row">
         <div class="grid-item" draggable="true">
+            <div class="resize-handle resize-handle-left"></div>
+            <div class="resize-handle resize-handle-right"></div>
             <div class="cpu-threads-container">
                 <h2>CPU Threads</h2>
                 <table class="cpu-threads-table">
@@ -59,7 +63,11 @@
                 </table>
             </div>
         </div>
+    </div>
+    <div class="grid-row">
         <div class="grid-item" draggable="true">
+            <div class="resize-handle resize-handle-left"></div>
+            <div class="resize-handle resize-handle-right"></div>
             <div class="chart-container" style="position: relative;">
                 <h2>Network Speed</h2>
                 <select id="networkInterface" class="refresh-rate-input network-dropdown"></select>
@@ -67,12 +75,16 @@
             </div>
         </div>
         <div class="grid-item" draggable="true">
+            <div class="resize-handle resize-handle-left"></div>
+            <div class="resize-handle resize-handle-right"></div>
             <div class="disks-container">
                 <h2>Disks</h2>
-                <div id="diskList"></div>
+                <div class="diskList" id="diskList"></div>
             </div>
         </div>
         <div class="grid-item" draggable="true">
+            <div class="resize-handle resize-handle-left"></div>
+            <div class="resize-handle resize-handle-right"></div>
             <div class="cpu-threads-container">
                 <h2>System Info</h2>
                 <div id="sysinfo"></div>
