@@ -467,6 +467,9 @@ document.getElementById('applyRate').addEventListener('click', () => {
 const gridRows = document.querySelectorAll('.grid-row');
 let draggedItem = null;
 
+const resize_event = new CustomEvent('resize_event', {});
+
+
 document.querySelectorAll('.grid-item').forEach((item, index) => {
     item.id = `item-${index + 1}`;
 });
@@ -495,12 +498,14 @@ document.querySelectorAll('.grid-item').forEach(item => {
         item.classList.remove('dragging');
         draggedItem = null;
     });
-
-    // Save state when resized
-    item.addEventListener('resize', () => {
-        saveItemState(item);
-    });
 });
+
+document.addEventListener('resize_event', () =>{
+    console.log("event");
+    document.querySelectorAll('.grid-item').forEach(item =>{
+        saveItemState(item);
+    })
+})
 
 // Function to save item state
 function saveItemState(item) {
@@ -619,10 +624,11 @@ function setupResizeHandles(item) {
         }
     }
 
-    function stopResize() {
+    function stopResize(item) {
         document.removeEventListener('mousemove', onLeftResize);
         document.removeEventListener('mousemove', onRightResize);
         document.removeEventListener('mouseup', stopResize);
+        document.dispatchEvent(resize_event);
     }
 }
 
