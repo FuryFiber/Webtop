@@ -2,50 +2,95 @@ body {
     font-family: Arial, sans-serif;
     text-align: center;
     background-color: #f4f7fc;
+    margin: 0;
+    padding: 0;
 }
 h1 {
     color: #333;
 }
-.chart-container {
-    width: 80%;
-    margin: 0 auto;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    height: 350px; /* Fixed height for the container */
-    background-color: #fff; /* Added background to the graph */
-    border-radius: 8px; /* Rounded corners for the container */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.grid-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
     padding: 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.grid-row {
+    display: flex;
+    gap: 20px;
+    width: 100%; /* Ensure rows take up the full width */
+    min-width: 100%; /* Prevent rows from shrinking */
+}
+.grid-item {
+    position: relative;
+    resize: horizontal; /* Allow horizontal resizing */
+    overflow: auto; /* Required for resize to work */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+    min-width: 300px; /* Minimum width to prevent shrinking too much */
+    height: 350px; /* Fixed height */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Align content to the top */
+    align-items: center; /* Center content horizontally */
+    flex: 1 1 auto; /* Allow items to grow and shrink */
+}
+.grid-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.95); /* Visual feedback for dragging */
+}
+.chart-container, .cpu-threads-container, .disks-container {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box; /* Ensure padding is included in width/height */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Align content to the top */
+    align-items: center; /* Center content horizontally */
+}
+.chart-container h2, .cpu-threads-container h2, .disks-container h2 {
+    margin: 0 0 10px 0; /* Remove top margin for headers */
+    text-align: center; /* Center headers */
 }
 canvas {
-    height: 80% !important; /* Ensure canvas fills the container */
-    width: 100% !important;  /* Ensure canvas fills the container */
+    height: 80% !important;
+    width: 100% !important;
 }
-.metrics-container {
-    width: 80%;
-    margin: 0 auto;
-    display: flex;
-    justify-content: center;
-    gap: 30px; /* Space between disk data and network table */
-    margin-top: 15px;
+.cpu-threads-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    margin: 0; /* Remove default table margin */
 }
-.disk-list {
-    width: 45%; /* Adjust width to ensure they fit side by side */
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
+.cpu-threads-table th, .cpu-threads-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
 }
-.disk-list h2 {
-    font-size: 1.5em;
-    margin-bottom: 15px;
-    color: #333;
-    text-align: center; /* Center the header */
+.cpu-threads-table th {
+    background-color: #8c38ff;
+    color: white;
+}
+.cpu-progress-bar-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+.cpu-progress-bar {
+    height: 20px;
+    background-color: #8c38ff;
+    transition: width 0.3s ease;
 }
 .disk-item {
     margin-bottom: 20px;
 }
-.disk-name, .network-name {
+.disk-name {
     font-weight: bold;
     margin-bottom: 10px;
     font-size: 1.2em;
@@ -62,11 +107,14 @@ canvas {
     width: 0%;
     transition: width 0.3s ease;
 }
-.disk-space-info, .network-data-info {
+.disk-space-info {
     text-align: center;
     margin-top: 5px;
     font-size: 1em;
 }
+/* Other styles remain unchanged */
+
+
 /* Refresh Rate Input and Button Container */
 .refresh-rate-container {
     display: flex;
@@ -141,10 +189,8 @@ canvas {
     z-index: 1; /* Ensures it stays above other elements */
 }
 .disks-container {
-    width: 45%;
+    width: 100%;
     margin: 0 auto;
-    margin-top: 15px;
-    margin-bottom: 15px;
     height: 350px; /* Fixed height for the container */
     background-color: #fff; /* Added background to the graph */
     border-radius: 8px; /* Rounded corners for the container */
@@ -152,10 +198,8 @@ canvas {
     padding: 20px;
 }
 .cpu-threads-container {
-    width: 45%;
+    width: 100%;
     margin: 0 auto;
-    margin-top: 15px;
-    margin-bottom: 15px;
     height: 350px; /* Fixed height for the container */
     background-color: #fff; /* Added background to the graph */
     border-radius: 8px; /* Rounded corners for the container */

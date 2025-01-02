@@ -30,55 +30,54 @@
     </div>
 </div>
 
-<div class="metrics-container">
-    <!-- Memory Usage Chart -->
-    <div class="chart-container">
-        <h2>Memory Usage</h2>
-        <canvas id="memoryChart"></canvas>
+<div class="grid-container">
+    <div class="grid-row">
+        <div class="grid-item" draggable="true">
+            <div class="chart-container">
+                <h2>Memory Usage</h2>
+                <canvas id="memoryChart"></canvas>
+            </div>
+        </div>
+        <div class="grid-item" draggable="true">
+            <div class="chart-container">
+                <h2>CPU Usage</h2>
+                <canvas id="cpuChart"></canvas>
+            </div>
+        </div>
     </div>
-
-    <!-- CPU Usage Chart -->
-    <div class="chart-container">
-        <h2>CPU Usage</h2>
-        <canvas id="cpuChart"></canvas>
-    </div>
-
-    <!-- CPU Thread information -->
-    <div class="cpu-threads-container">
-        <h2>CPU Threads</h2>
-
-        <table class="cpu-threads-table">
-            <colgroup>
-                <col style="width: 20%;">
-                <col style="width: 30%;">
-                <col style="width: 50%;">
-            </colgroup>
-            <tbody id="cpuThreadsTableBody">
-            <!-- Rows will be dynamically populated -->
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="metrics-container">
-    <!-- Network Speed Charts -->
-    <div class="chart-container" style="position: relative;">
-        <h2>Network Speed</h2>
-        <select id="networkInterface" class="refresh-rate-input network-dropdown">
-            <!-- Options will be dynamically populated -->
-        </select>
-        <canvas id="upSpeedChart"></canvas>
-    </div>
-
-    <!-- Disk Usage -->
-    <div class="disks-container">
-        <h2>Disks</h2>
-        <div id="diskList"></div>
-    </div>
-
-    <div class="cpu-threads-container">
-        <h2>System Info</h2>
-        <div id="sysinfo"></div>
+    <div class="grid-row">
+        <div class="grid-item" draggable="true">
+            <div class="cpu-threads-container">
+                <h2>CPU Threads</h2>
+                <table class="cpu-threads-table">
+                    <colgroup>
+                        <col style="width: 20%;">
+                        <col style="width: 30%;">
+                        <col style="width: 50%;">
+                    </colgroup>
+                    <tbody id="cpuThreadsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="grid-item" draggable="true">
+            <div class="chart-container" style="position: relative;">
+                <h2>Network Speed</h2>
+                <select id="networkInterface" class="refresh-rate-input network-dropdown"></select>
+                <canvas id="upSpeedChart"></canvas>
+            </div>
+        </div>
+        <div class="grid-item" draggable="true">
+            <div class="disks-container">
+                <h2>Disks</h2>
+                <div id="diskList"></div>
+            </div>
+        </div>
+        <div class="grid-item" draggable="true">
+            <div class="cpu-threads-container">
+                <h2>System Info</h2>
+                <div id="sysinfo"></div>
+            </div>
+        </div>
     </div>
 </div>
 <script src="/static/monitoring.js"></script>
