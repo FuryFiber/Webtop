@@ -1,7 +1,11 @@
 # Webtop
 Hardware monitoring designed for servers, with webui.
-![img.png](res/img.png)
+
+## Default:
 ![img_1.png](res/img_1.png)
+
+## darkreader:
+![img.png](res/img.png)
 ## Features
 - [x] memory usage graph
 - [x] cpu usage graph
