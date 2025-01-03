@@ -1,10 +1,10 @@
 # Webtop
-Hardware monitoring designed for servers, with webui.
+Easy hardware monitoring for servers.
 
 ## Default:
 ![img_1.png](res/img_1.png)
 
-## darkreader:
+## Darkreader:
 ![img.png](res/img.png)
 ## Features
 - [x] memory usage graph
@@ -21,3 +21,6 @@ Hardware monitoring designed for servers, with webui.
 - [ ] dynamic display of components where user can select which items they want to see on their dashboard
 - [ ] docker container monitoring and managing
 - [ ] full lab dashboard with links to all webservices running on the server
+
+
+Do you have any sugestions on what else Webtop could be monitoring, do let me know by opening an issue!
