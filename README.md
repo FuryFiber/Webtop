@@ -1,7 +1,6 @@
 # Webtop
 Hardware monitoring designed for servers, with webui.
-![](res/Screenshot%20from%202024-12-29%2019-36-36.png)
-
+![img.png](res/img.png)
 ## Features
 - [x] memory usage graph
 - [x] cpu usage graph
