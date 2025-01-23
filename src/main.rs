@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use sysinfo::{System, SystemExt, CpuExt, DiskExt, NetworksExt, NetworkExt};
+use sysinfo::{System, Disks, Networks};
 use warp::Filter;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
@@ -16,6 +16,7 @@ struct SystemMetrics {
     memory_history: Vec<f32>,
     cpu_history: Vec<f32>,
     network_history: HashMap<String, NetworkHistory>,
+    disk_history: HashMap<String, DiskHistory>
 }
 
 #[derive(Serialize)]
@@ -26,6 +27,7 @@ struct SystemGeneral {
     hostname: String,
     total_memory: u64,
     cpus: u64,
+    uptime: String,
 }
 
 #[derive(Serialize, Debug)]
@@ -33,6 +35,12 @@ struct DiskInfo {
     name: String,
     total_space: u64,
     available_space: u64,
+}
+
+#[derive(Serialize, Debug, Clone)]
+struct DiskHistory {
+    read_history: Vec<u64>,
+    write_history: Vec<u64>,
 }
 
 #[derive(Serialize, Debug)]
@@ -50,31 +58,46 @@ struct NetworkHistory {
 
 struct MetricsState {
     system: System,
+    disks: Disks,
+    networks: Networks,
     memory_history: Vec<f32>,
     cpu_history: Vec<f32>,
+}
+
+fn format_time(secs: u64) -> String {
+    let hours = secs / 3600;
+    let minutes = (secs % 3600) / 60;
+    let seconds = secs % 60;
+
+    format!("{}:{}:{}", hours, minutes, seconds)
 }
 
 #[tokio::main]
 async fn main() {
     let metrics_state = Arc::new(Mutex::new(MetricsState {
         system: System::new_all(),
+        disks: Disks::new_with_refreshed_list(),
+        networks: Networks::new_with_refreshed_list(),
         memory_history: Vec::new(),
         cpu_history: Vec::new(),
     }));
 
     let network_state = Arc::new(Mutex::new(HashMap::new()));
+    let disk_state = Arc::new(Mutex::new(HashMap::new()));
 
     // Endpoint to fetch system metrics
     let metrics_state_clone = metrics_state.clone();
     let network_state_clone = network_state.clone();
+    let disk_state_clone = disk_state.clone();
     let system_metrics_route = warp::path("system_metrics")
         .and(warp::get())
         .map(move || {
             let mut state = metrics_state_clone.lock().unwrap();
             let mut network_state_inner = network_state_clone.lock().unwrap();
+            let mut disk_state_inner = disk_state_clone.lock().unwrap();
             state.system.refresh_all();
 
-            let cpu_usage = state.system.global_cpu_info().cpu_usage();
+            let cpu_usage = state.system.global_cpu_usage();
             let mut cpus = Vec::new();
             for cpu in state.system.cpus() {
                 cpus.push(cpu.cpu_usage())
@@ -94,7 +117,7 @@ async fn main() {
             }
 
             // Gather disk information
-            let disks: Vec<DiskInfo> = state.system.disks().iter().map(|disk| {
+            let disks: Vec<DiskInfo> = state.disks.iter().map(|disk| {
                 DiskInfo {
                     name: disk.name().to_string_lossy().into(),
                     total_space: disk.total_space(),
@@ -102,8 +125,27 @@ async fn main() {
                 }
             }).collect();
 
+            // Update disk history
+            for disk in state.disks.list(){
+                let prev = disk_state_inner.entry(disk.name().to_string_lossy().into())
+                    .or_insert(DiskHistory {
+                        read_history: Vec::new(),
+                        write_history: Vec::new(),
+                    });
+
+                prev.read_history.push(disk.usage().total_read_bytes);
+                prev.write_history.push(disk.usage().total_written_bytes);
+
+                if prev.read_history.len() > 50 {
+                    prev.read_history.remove(0);
+                }
+                if prev.write_history.len() > 50 {
+                    prev.write_history.remove(0);
+                }
+            }
+
             // Gather network information
-            let networks: Vec<NetworkInfo> = state.system.networks().iter().map(|(name, data)| {
+            let networks: Vec<NetworkInfo> = state.networks.iter().map(|(name, data)| {
                 NetworkInfo {
                     name: name.clone(),
                     up: data.total_transmitted(),
@@ -112,7 +154,7 @@ async fn main() {
             }).collect();
 
             // Update network history
-            for (name, data) in state.system.networks() {
+            for (name, data) in state.networks.iter() {
                 let prev = network_state_inner.entry(name.clone())
                     .or_insert(NetworkHistory {
                         up: Vec::new(),
@@ -139,7 +181,8 @@ async fn main() {
                 networks,
                 memory_history: state.memory_history.clone(),
                 cpu_history: state.cpu_history.clone(),
-                network_history: network_state_inner.clone()
+                network_history: network_state_inner.clone(),
+                disk_history: disk_state_inner.clone(),
             };
 
             warp::reply::json(&metrics)
@@ -151,12 +194,13 @@ async fn main() {
         .map(move || {
             let state = system_genera_clone.lock().unwrap();
             let system_general = SystemGeneral{
-                name: state.system.name().unwrap_or("".to_string()),
-                kernel_version: state.system.kernel_version().unwrap_or("".to_string()),
-                os_version: state.system.os_version().unwrap_or("".to_string()),
-                hostname: state.system.host_name().unwrap_or("".to_string()),
+                name: System::name().unwrap_or("".to_string()),
+                kernel_version: System::kernel_version().unwrap_or("".to_string()),
+                os_version: System::os_version().unwrap_or("".to_string()),
+                hostname: System::host_name().unwrap_or("".to_string()),
                 total_memory: state.system.total_memory(),
                 cpus: state.system.cpus().len() as u64,
+                uptime: format_time(System::uptime())
             };
 
             warp::reply::json(&system_general)
@@ -178,6 +222,8 @@ async fn main() {
             {
                 let mut state = metrics_state_updater.lock().unwrap();
                 state.system.refresh_all();
+                state.networks.refresh(true);
+                state.disks.refresh(true);
             }
             sleep(Duration::from_millis(500)).await;
         }

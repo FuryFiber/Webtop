@@ -74,12 +74,21 @@
                 <canvas id="upSpeedChart"></canvas>
             </div>
         </div>
-        <div class="grid-item" draggable="true">
+        <div class="grid-item disk-info-container" draggable="true">
             <div class="resize-handle resize-handle-left"></div>
             <div class="resize-handle resize-handle-right"></div>
             <div class="disks-container">
                 <h2>Disks</h2>
                 <div class="diskList" id="diskList"></div>
+            </div>
+        </div>
+        <div class="grid-item disk-speed-container" draggable="true">
+            <div class="resize-handle resize-handle-left"></div>
+            <div class="resize-handle resize-handle-right"></div>
+            <div class="chart-container" style="position: relative;">
+                <h2>Disk I/O</h2>
+                <select id="diskInterface" class="refresh-rate-input network-dropdown"></select>
+                <canvas id="diskSpeedChart"></canvas>
             </div>
         </div>
         <div class="grid-item" draggable="true">

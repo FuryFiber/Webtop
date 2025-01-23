@@ -4,13 +4,12 @@ let refreshInterval = 2500;
 let intervalId;
 
 function startFetchingMetrics() {
-    intervalId = setInterval(fetchMetrics, refreshInterval); // Set the new interval
+    intervalId = setInterval(() => {
+        fetchMetrics();
+        fetchSystemInfo();
+    }, refreshInterval); // Set the new interval
 }
 
-async function initializeCharts() {
-    await fetchHistory(); // Populate the graphs with historical data
-    //setInterval(fetchLatest, refreshInterval); // Start fetching latest data points periodically
-}
 
 // Event listener for applying a new refresh rate
 document.getElementById('applyRate').addEventListener('click', () => {
@@ -20,7 +19,10 @@ document.getElementById('applyRate').addEventListener('click', () => {
     if (newRate >= 500) { // Set a minimum refresh rate of 500ms
         refreshInterval = newRate;
         clearInterval(intervalId); // Clear the previous interval
-        intervalId = setInterval(fetchMetrics, refreshInterval); // Apply the new interval
+        intervalId = setInterval(() => {
+            fetchMetrics();
+            fetchSystemInfo();
+        }, refreshInterval); // Set the new interval
     } else {
         alert('Please enter a value of at least 500 ms');
     }
@@ -204,8 +206,9 @@ function initializeGrid() {
     gridContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
 }
 
+
 initializeGrid();
 fetchSystemInfo();
 fetchMetrics();
 startFetchingMetrics();
-initializeCharts();
+fetchHistory();

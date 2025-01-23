@@ -1,7 +1,8 @@
-import { memoryChart, cpuChart, upSpeedChart} from "./charts.js";
+import { memoryChart, cpuChart, upSpeedChart, diskSpeedChart} from "./charts.js";
 
 // Fetch system info from the /system_general endpoint and populate the System Info section
-let prevSelected = "";
+let prevSelectedNetwork = "";
+let prevSelectedDisk = "";
 
 export async function fetchSystemInfo() {
     try {
@@ -21,7 +22,8 @@ export async function fetchSystemInfo() {
             { label: 'OS Version', value: systemInfo.os_version },
             { label: 'Hostname', value: systemInfo.hostname },
             { label: 'Total Memory', value: `${(systemInfo.total_memory / 1024 / 1024 / 1024).toFixed(2)} GB` },
-            { label: 'CPUs', value: systemInfo.cpus }
+            { label: 'CPUs', value: systemInfo.cpus },
+            { label: 'Uptime', value: systemInfo.uptime},
         ];
 
         infoItems.forEach(item => {
@@ -77,10 +79,38 @@ export async function fetchHistory() {
         upSpeedChart.data.datasets[0].data = upSpeeds; // Up speeds
         upSpeedChart.data.datasets[1].data = downSpeeds; // Down speeds
 
+        // Update disk list if not already done
+        // Populate the dropdown with network interface options (if not already populated)
+        const diskSelect = document.getElementById('diskInterface');
+        if (diskSelect.options.length === 0) {
+            data.disks.forEach(disk => {
+                const option = document.createElement('option');
+                option.value = disk.name;
+                option.textContent = disk.name;
+                diskSelect.appendChild(option);
+            });
+        }
+        // Get the selected network interface
+        const selectedDisk = diskSelect.value;
+        const diskHistory = data.network_history[selectedDisk]; // Access its history
+
+        const totalwritten = diskHistory.write_history; // Extract total written
+        const totalread = diskHistory.read_history; // Extract total read
+
+        // Calculate speeds (assuming evenly spaced intervals between records)
+        const writeSpeeds = totalwritten.map((value, index) => index === 0 ? 0 : (value - totalwritten[index - 1]) / 1024); // Convert to KiB/s
+        const readSpeeds = totalread.map((value, index) => index === 0 ? 0 : (value - totalread[index - 1]) / 1024); // Convert to KiB/s
+
+        // Populate the chart
+        diskSpeedChart.data.labels = writeSpeeds.map((_, i) => i); // Time labels
+        diskSpeedChart.data.datasets[0].data = writeSpeeds; // write speeds
+        diskSpeedChart.data.datasets[1].data = readSpeeds; // read speeds
+
         // Update the charts after populating them
         memoryChart.update();
         cpuChart.update();
         upSpeedChart.update();
+        diskSpeedChart.update();
     } catch (error) {
         console.error("Error fetching historical metrics", error);
     }
@@ -125,7 +155,7 @@ export async function fetchMetrics() {
         }
         // Get the selected network interface
         const selectedInterface = networkSelect.value;
-        if (prevSelected !== selectedInterface) {
+        if (prevSelectedNetwork !== selectedInterface) {
             // Get the selected network interface
             const networkHistory = data.network_history[selectedInterface]; // Access its history
 
@@ -163,12 +193,66 @@ export async function fetchMetrics() {
                 upSpeedChart.data.datasets[1].data.push(newDownSpeed);
             }
         }
-        prevSelected = selectedInterface;
+        prevSelectedNetwork = selectedInterface;
+
+        // Update network interface list if not already done
+        // Populate the dropdown with network interface options (if not already populated)
+        const diskSelect = document.getElementById('diskInterface');
+        if (diskSelect.options.length === 0) {
+            data.disks.forEach(disk => {
+                const option = document.createElement('option');
+                option.value = disk.name;
+                option.textContent = disk.name;
+                diskSelect.appendChild(option);
+            });
+        }
+        // Get the selected network interface
+        const selectedDisk = diskSelect.value;
+        if (prevSelectedDisk !== selectedDisk) {
+            // Get the selected network interface
+            const diskHistory = data.disk_history[selectedDisk]; // Access its history
+
+            const totalwritten = diskHistory.write_history; // Extract total transmitted
+            const totalread = diskHistory.read_history; // Extract total received
+
+            // Calculate speeds (assuming evenly spaced intervals between records)
+            const writeSpeeds = totalwritten.map((value, index) => index === 0 ? 0 : (value - totalwritten[index - 1]) / 1024); // Convert to KiB/s
+            const readSpeeds = totalread.map((value, index) => index === 0 ? 0 : (value - totalread[index - 1]) / 1024); // Convert to KiB/s
+
+            // Populate the chart
+            diskSpeedChart.data.labels = writeSpeeds.map((_, i) => i); // Time labels
+            diskSpeedChart.data.datasets[0].data = writeSpeeds; // Up speeds
+            diskSpeedChart.data.datasets[1].data = readSpeeds; // Down speeds
+        }
+        else {
+            const diskHistory = data.disk_history[selectedDisk]; // Access its history
+
+            const totalwritten = diskHistory.write_history; // Extract total transmitted
+            const totalread = diskHistory.read_history; // Extract total received
+
+            // Calculate the latest speeds (assuming last entry is the newest)
+            const newWriteSpeed = (totalwritten[totalwritten.length - 1] - totalwritten[totalwritten.length - 2]) / 1024; // Convert to KiB/s
+            const newReadSpeed = (totalread[totalread.length - 1] - totalread[totalread.length - 2]) / 1024; // Convert to KiB/s
+
+            if (totalwritten.length < 50){
+                diskSpeedChart.data.labels = totalwritten.map((_, i) => i); // Time labels
+                diskSpeedChart.data.datasets[0].data.push(newWriteSpeed); // Add the new data point
+                diskSpeedChart.data.datasets[1].data.push(newReadSpeed); // Add the new data point
+            }
+            else {
+                diskSpeedChart.data.datasets[0].data.shift(); // Remove the first data point
+                diskSpeedChart.data.datasets[0].data.push(newWriteSpeed);
+                diskSpeedChart.data.datasets[1].data.shift(); // Remove the first data point
+                diskSpeedChart.data.datasets[1].data.push(newReadSpeed);
+            }
+        }
+        prevSelectedDisk = selectedDisk;
 
         // Refresh the charts
         memoryChart.update();
         cpuChart.update();
         upSpeedChart.update();
+        diskSpeedChart.update();
 
         // Update CPU threads list
         const cpuThreadsTableBody = document.getElementById('cpuThreadsTableBody');
@@ -238,7 +322,6 @@ export async function fetchMetrics() {
 
             diskListContainer.appendChild(diskItem);
         });
-
     } catch (error) {
         console.error("Error fetching system metrics", error);
     }

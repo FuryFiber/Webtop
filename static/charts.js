@@ -191,3 +191,56 @@ export const upSpeedChart = new Chart(upSpeedCtx, {
     },
     plugins: [currentSpeedPlugin]
 });
+// Set up Chart.js for Network Up Speed
+const diskSpeedCtx = document.getElementById('diskSpeedChart').getContext('2d');
+export const diskSpeedChart = new Chart(diskSpeedCtx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Read Speed (KiB/s)',
+            data: [],
+            borderColor: 'rgb(67,201,105)',
+            backgroundColor: 'rgba(67, 201, 105, 0.2)',
+            fill: true,
+            tension: 0.1
+        },
+        {
+            label: 'Write Speed (KiB/s)',
+            data: [],
+            borderColor: 'rgb(255,64,64)',
+            backgroundColor: 'rgba(255, 64, 64, 0.2)',
+            fill: true,
+            tension: 0.1
+        }]
+    },
+    options: {
+        scales: {
+            x: {
+                type: 'linear',
+                position: 'bottom',
+                title: {
+                    display: false,
+                    text: 'Time (s)'
+                },
+                ticks: {
+                    display: false
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Speed (KiB/s)'
+                }
+            }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true
+            }
+        }
+    },
+    plugins: [currentSpeedPlugin]
+});
