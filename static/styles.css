@@ -32,7 +32,7 @@ h1 {
     background-color: #fff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease;
-    min-width: 300px; /* Minimum width to prevent shrinking too much */
+    min-width: 200px; /* Minimum width to prevent shrinking too much */
     height: 350px; /* Fixed height */
     display: flex;
     flex-direction: column;

@@ -64,7 +64,6 @@ document.querySelectorAll('.grid-item').forEach(item => {
 });
 
 document.addEventListener('resize_event', () =>{
-    console.log("event");
     document.querySelectorAll('.grid-item').forEach(item =>{
         saveItemState(item);
     })
