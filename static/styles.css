@@ -316,3 +316,40 @@ ul.system-info li:hover {
 .resize-handle-right {
     right: 0;
 }
+
+/* Add this to the end of the styles.css file */
+
+.toggle-view-button {
+    padding: 10px 20px;
+    background-color: #8c38ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.toggle-view-button:hover {
+    background-color: #7326d1;
+    box-shadow: 0 4px 12px rgba(140, 56, 255, 0.3);
+}
+
+.toggle-view-button:active {
+    background-color: #5b1ca9;
+    box-shadow: 0 2px 8px rgba(140, 56, 255, 0.5);
+}
+
+/* Ensure the disk-speed-container is hidden by default */
+.disk-speed-container {
+    display: none;
+}
+
+.toggle-view-button {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    width: 80px;
+    z-index: 1; /* Ensures it stays above other elements */
+}

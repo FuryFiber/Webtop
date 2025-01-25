@@ -205,6 +205,29 @@ function initializeGrid() {
     gridContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
 }
 
+// Add this code to the end of the monitoring.js file
+
+document.getElementById('toggleDiskView').addEventListener('click', () => {
+    const diskInfoContainer = document.querySelector('.disk-info-container');
+    const diskSpeedContainer = document.querySelector('.disk-speed-container');
+
+    // Toggle visibility
+    diskInfoContainer.style.display = 'none';
+    diskSpeedContainer.style.display = 'flex';
+    document.getElementById('toggleDiskView').textContent = 'Info';
+});
+
+document.getElementById('toggleDiskInfo').addEventListener('click', () => {
+    const diskInfoContainer = document.querySelector('.disk-info-container');
+    const diskSpeedContainer = document.querySelector('.disk-speed-container');
+
+    // Toggle visibility
+    diskInfoContainer.style.display = 'flex';
+    diskSpeedContainer.style.display = 'none';
+    document.getElementById('toggleDiskView').textContent = 'Speed';
+});
+
+
 
 initializeGrid();
 fetchSystemInfo();
