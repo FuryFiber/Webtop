@@ -2,16 +2,16 @@
 Easy hardware monitoring for servers.
 
 ## Default:
-![img_1.png](res/img_1.png)
-
+![Default.png](res/Default.png)
 ## Darkreader:
-![img.png](res/img.png)
+![Darkreader.png](res/Darkreader.png)
 ## Features
 - [x] memory usage graph
 - [x] cpu usage graph
 - [x] individual thread usage display
 - [x] network speed graph
 - [x] disk space display
+- [x] disk I/O speed graph
 - [x] general system info display
 - [x] variable refresh rate
 - [x] draggable and resizeable components
@@ -23,4 +23,4 @@ Easy hardware monitoring for servers.
 - [ ] full lab dashboard with links to all webservices running on the server
 
 
-Do you have any sugestions on what else Webtop could be monitoring, do let me know by opening an issue!
+Do you have any suggestions on what else Webtop could be monitoring, do let me know by opening an issue!
